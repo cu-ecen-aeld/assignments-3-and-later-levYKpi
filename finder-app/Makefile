@@ -9,8 +9,8 @@ endif
 CFLAGS = -Wall -Wextra -std=c11 -g # Common compilation flags: warnings, C11 standard, debug info
 
 # The name program
-TARGET = finder-app/writer
-OBJ_FILE = finder-app/writer.o
+TARGET = writer
+OBJ_FILE = writer.o
 
 # Default target (the first one listed)
 all: $(TARGET)
