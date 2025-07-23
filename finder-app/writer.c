@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     syslog(LOG_USER, "Attempting to write to file: '%s'", writefile);
     writefile = argv[1];
 
-    // 2. Validate absolute path
+    // Validate absolute path
     if (writefile[0] != '/') {
         syslog(LOG_ERR, "Validation Error: writefile '%s' is not a full path (must start with '/').", writefile);
         fprintf(stderr, "Error: writefile is not a full path to a file.\n");
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    // 4. Write to file
+    // Write to file
     filePointer = fopen(writefile, "w");
     if (filePointer == NULL) {
         syslog(LOG_ERR, "File Error: Failed to open file '%s' for writing: %m", writefile);
