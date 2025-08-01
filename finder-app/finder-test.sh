@@ -9,6 +9,12 @@ NUMFILES=10
 WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
 username=$(cat conf/username.txt)
+#add compilation
+CC = $(CROSS_COMPILE)gcc
+CFLAGS = -Wall -Wextra -std=c11 -g
+TARGET = writer
+OBJ_FILE = writer.o
+
 
 if [ $# -lt 3 ]
 then
@@ -49,9 +55,13 @@ then
 	fi
 fi
 
-echo "Removing the old writer utility and compiling as a native application"
-make clean
-make
+#echo "Removing the old writer utility and compiling as a native application"
+#make clean
+#make
+#compilation
+rm -f $(TARGET) $(OBJ_FILE)
+$(CC) $(CFLAGS) -c $(TARGET).c -o $(OBJ_FILE)
+$(CC) $(OBJ_FILE) -o $(TARGET)
 
 for i in $( seq 1 $NUMFILES)
 do
