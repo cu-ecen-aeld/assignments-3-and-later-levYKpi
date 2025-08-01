@@ -1,4 +1,9 @@
 #include "systemcalls.h"
+#include <errno.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <fcntl.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -16,8 +21,7 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
-
-    return true;
+    return system(cmd) ? false : true;
 }
 
 /**
@@ -36,6 +40,8 @@ bool do_system(const char *cmd)
 
 bool do_exec(int count, ...)
 {
+    pid_t pid;
+    int status;
     va_list args;
     va_start(args, count);
     char * command[count+1];
@@ -58,10 +64,33 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
-
     va_end(args);
-
-    return true;
+    pid = fork();
+    if (pid == -1) {
+        perror("fork failed");
+        return false;
+    } else if (pid == 0) {
+        execv(command[0], command);
+        perror("execv failed in child");
+        _exit(EXIT_FAILURE);
+    } else {
+        if (waitpid(pid, &status, 0) == -1) {
+            perror("waitpid failed in parent");
+            return false;
+        }
+        if (WIFEXITED(status)) {
+            int exit_status = WEXITSTATUS(status);
+            if (exit_status == 0) {
+                return true;
+            } else {
+                fprintf(stderr, "Command '%s' exited with non-zero status %d.\n", command[0], exit_status);
+                return false;
+            }
+        } else {
+            fprintf(stderr, "Command '%s' failed.\n", command[0]);
+            return false;
+        }
+    }
 }
 
 /**
@@ -71,6 +100,9 @@ bool do_exec(int count, ...)
 */
 bool do_exec_redirect(const char *outputfile, int count, ...)
 {
+    pid_t pid;
+    int status;
+    int fd;
     va_list args;
     va_start(args, count);
     char * command[count+1];
@@ -92,8 +124,48 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
-
     va_end(args);
-
-    return true;
+    pid = fork();
+    if (pid == -1) {
+        perror("fork failed");
+        return false;
+    } else if (pid == 0) {
+        fd = open(outputfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (fd == -1) {
+            perror("open output file failed in child");
+            va_end(args);
+            _exit(EXIT_FAILURE);
+        }
+        if (dup2(fd, STDOUT_FILENO) == -1) {
+            perror("dup2 STDOUT_FILENO failed in child");
+            close(fd);
+            va_end(args);
+            _exit(EXIT_FAILURE);
+        }
+        if (close(fd) == -1) {
+            perror("close original output file descriptor failed in child (after dup2)");
+            va_end(args);
+            _exit(EXIT_FAILURE);
+        }
+        execv(command[0], command);
+        perror("execv failed in child");
+        _exit(EXIT_FAILURE);
+    } else {
+        if (waitpid(pid, &status, 0) == -1) {
+            perror("waitpid failed in parent");
+            return false;
+        }
+        if (WIFEXITED(status)) {
+            int exit_status = WEXITSTATUS(status);
+            if (exit_status == 0) {
+                return true;
+            } else {
+                fprintf(stderr, "Command '%s' exited with non-zero status %d.\n", command[0], exit_status);
+                return false;
+            }
+        } else {
+            fprintf(stderr, "Command '%s' failed.\n", command[0]);
+            return false;
+        }
+    }
 }
