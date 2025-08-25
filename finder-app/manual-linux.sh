@@ -110,6 +110,7 @@ cp conf/assignment.txt ${OUTDIR}/rootfs/home/conf
 cp conf/username.txt ${OUTDIR}/rootfs/home/conf
 cp finder.sh ${OUTDIR}/rootfs/home
 cp finder-test.sh ${OUTDIR}/rootfs/home
+cp autorun-quemu.sh ${OUTDIR}/rootfs/home
 
 # TODO: Chown the root directory
 sudo chown -R root:root ${OUTDIR}/rootfs
